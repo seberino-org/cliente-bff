@@ -1,22 +1,92 @@
 package com.ibm.sample.cliente.bff;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import com.ibm.sample.cliente.bff.dto.Cliente;
 import com.ibm.sample.cliente.bff.dto.RespostaBFF;
+import com.ibm.sample.cliente.bff.dto.RetornoCliente;
 
 @RestController
 public class ClienteBFFRest {
 
+	@Value("${cliente-rest.url}")
+	private String urlClienteRest; 
+	
+	@Value("${cliente-kafka-topico}")
+	private String cadastroTopic; 
+	
+	@Autowired
+	private KafkaTemplate<String, Cliente> kafka;
+	
+	@Autowired
+	private RestTemplate clienteRest;
 	
 	@PostMapping("/bff/cliente")
-	public RespostaBFF processaCadastro(Cliente cliente)
+	public RespostaBFF processaCadastro(@RequestBody Cliente cliente)
 	{
 		RespostaBFF resposta = new RespostaBFF();
 		
-		resposta.setCodigo("200-SUCESSO");
-		resposta.setMensagem("Cadastro efetuado com sucesso!");
-		return resposta;
+		try
+		{
+			this.validaCliente(cliente);
+			if (this.clienteExiste(cliente.getCpf()))
+			{
+				resposta.setCodigo("201-CLIENTE JA CADASTRADO");
+				resposta.setMensagem("Cliente ja cadastrado anteriormente com esse CPF!" );
+				return resposta;
+			}
+			
+			enviaMensagemKafka(cliente);
+		
+			resposta.setCodigo("200-SUCESSO");
+			resposta.setMensagem("Cadastro submetido com sucesso! " );
+			return resposta;
+		}
+		catch (Exception e)
+		{
+			resposta.setCodigo("400-BAD REQUEST");
+			resposta.setMensagem("Erro no processamento: " + e.getMessage());
+			e.printStackTrace();
+			return resposta;
+		}
+		
 	}
+	private void enviaMensagemKafka(Cliente cliente)
+	{
+		kafka.send(cadastroTopic,cliente);
+	}
+	
+	private boolean clienteExiste(Long cpf)
+	{
+		RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+		if (resultado.getCodigo().equals("200-FOUND"))
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	private void validaCliente(Cliente cliente) throws Exception
+	{
+		if (cliente==null)
+		{
+			throw new Exception("Payload inváido, não foram encontrados os dados do cliente");
+		}
+		if (cliente.getCpf()==null || cliente.getCpf()==0)
+		{
+			throw new Exception("CPF é um campo obrigatório");
+		}
+		if (cliente.getNome()==null || cliente.getNome().length()==0)
+		{
+			throw new Exception("Nome é um campo obrigatório");
+		}
+		
+	}
+	
 }
