@@ -3,6 +3,7 @@ package com.ibm.sample.cliente.bff;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ public class ClienteBFFRest {
 	@Autowired
 	private RestTemplate clienteRest;
 	
+	@CrossOrigin(origins = "*")
 	@PostMapping("/bff/cliente")
 	public RespostaBFF processaCadastro(@RequestBody Cliente cliente)
 	{
