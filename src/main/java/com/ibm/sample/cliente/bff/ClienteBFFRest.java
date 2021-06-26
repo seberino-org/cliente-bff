@@ -1,9 +1,15 @@
 package com.ibm.sample.cliente.bff;
 
+import java.util.List;
+
+import javax.websocket.server.PathParam;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +33,14 @@ public class ClienteBFFRest {
 	
 	@Autowired
 	private RestTemplate clienteRest;
+	
+	@CrossOrigin(origins = "*")
+	@GetMapping("/bff/cliente/pesquisa/{nome}")
+	public List<Cliente> pesquisaClientes(@PathVariable String nome)
+	{	
+		return clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
+	}
+	
 	
 	@CrossOrigin(origins = "*")
 	@PostMapping("/bff/cliente")
