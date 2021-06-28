@@ -48,7 +48,7 @@ public class ClienteBFFRest {
 	}
 	
 	
-	@GetMapping("/cliente/{cpf}")
+	@GetMapping("/bff/cliente/{cpf}")
 	public RetornoCliente recuperaCliente(@PathVariable Long cpf)
 	{
 		return clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
