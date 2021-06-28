@@ -47,6 +47,14 @@ public class ClienteBFFRest {
 		return clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
 	}
 	
+	
+	@GetMapping("/cliente/{cpf}")
+	public RetornoCliente recuperaCliente(@PathVariable Long cpf)
+	{
+		return clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+		
+	}
+	
 	@CrossOrigin(origins = "*")
 	@DeleteMapping("/bff/cliente")
 	public RespostaBFF excluiCliente(@RequestBody Cliente cliente)
