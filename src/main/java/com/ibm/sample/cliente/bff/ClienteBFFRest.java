@@ -56,22 +56,22 @@ public class ClienteBFFRest {
 	}
 	
 	@CrossOrigin(origins = "*")
-	@DeleteMapping("/bff/cliente")
-	public RespostaBFF excluiCliente(@RequestBody Cliente cliente)
+	@DeleteMapping("/bff/cliente/{cpf}")
+	public RespostaBFF excluiCliente(@PathVariable Long cpf)
 	{
 		RespostaBFF resposta = new RespostaBFF();
 		
 		try
 		{
-			this.validaCliente(cliente);
-			if (!this.clienteExiste(cliente.getCpf()))
+			RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+			if (!resultado.getCodigo().equals("200-FOUND"))
 			{
 				resposta.setCodigo("404-CLIENTE NAO CADASTRADO");
 				resposta.setMensagem("Cliente nao encontrado com esse CPF!" );
 				return resposta;
 			}
 			
-			enviaMensagemKafka(this.deleteTopic, cliente);
+			enviaMensagemKafka(this.deleteTopic, resultado.getCliente());
 		
 			resposta.setCodigo("202-EXCLUIDO");
 			resposta.setMensagem("Deleção submetida com sucesso! " );
