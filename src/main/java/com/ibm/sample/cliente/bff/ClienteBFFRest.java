@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,11 @@ public class ClienteBFFRest {
 	@Value("${cliente-rest.url}")
 	private String urlClienteRest; 
 	
+	
+	
+	@Value("${delete-cliente-kafka-topico}")
+	private String deleteTopic; 
+
 	@Value("${cliente-kafka-topico}")
 	private String cadastroTopic; 
 	
@@ -41,6 +47,37 @@ public class ClienteBFFRest {
 		return clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
 	}
 	
+	@CrossOrigin(origins = "*")
+	@DeleteMapping("/bff/cliente")
+	public RespostaBFF excluiCliente(@RequestBody Cliente cliente)
+	{
+		RespostaBFF resposta = new RespostaBFF();
+		
+		try
+		{
+			this.validaCliente(cliente);
+			if (!this.clienteExiste(cliente.getCpf()))
+			{
+				resposta.setCodigo("404-CLIENTE NAO CADASTRADO");
+				resposta.setMensagem("Cliente nao encontrado com esse CPF!" );
+				return resposta;
+			}
+			
+			enviaMensagemKafka(this.deleteTopic, cliente);
+		
+			resposta.setCodigo("202-EXCLUIDO");
+			resposta.setMensagem("Deleção submetida com sucesso! " );
+			return resposta;
+		}
+		catch (Exception e)
+		{
+			resposta.setCodigo("400-BAD REQUEST");
+			resposta.setMensagem("Erro no processamento: " + e.getMessage());
+			e.printStackTrace();
+			return resposta;
+		}
+		
+	}
 	
 	@CrossOrigin(origins = "*")
 	@PostMapping("/bff/cliente")
@@ -58,7 +95,7 @@ public class ClienteBFFRest {
 				return resposta;
 			}
 			
-			enviaMensagemKafka(cliente);
+			enviaMensagemKafka(this.cadastroTopic, cliente);
 		
 			resposta.setCodigo("200-SUCESSO");
 			resposta.setMensagem("Cadastro submetido com sucesso! " );
@@ -73,9 +110,9 @@ public class ClienteBFFRest {
 		}
 		
 	}
-	private void enviaMensagemKafka(Cliente cliente)
+	private void enviaMensagemKafka(String topico, Cliente cliente)
 	{
-		kafka.send(cadastroTopic,cliente);
+		kafka.send(topico,cliente);
 	}
 	
 	private boolean clienteExiste(Long cpf)
