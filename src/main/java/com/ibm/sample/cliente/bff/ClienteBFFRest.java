@@ -60,7 +60,7 @@ public class ClienteBFFRest {
 		}
 		catch (Exception e)
 		{
-			return new ResponseEntity<>(HttpStatus.FOUND);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
 	}
