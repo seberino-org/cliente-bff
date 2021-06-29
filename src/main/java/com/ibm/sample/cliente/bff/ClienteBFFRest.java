@@ -51,9 +51,17 @@ public class ClienteBFFRest {
 	
 	
 	@GetMapping("/bff/cliente/{cpf}")
-	public RetornoCliente recuperaCliente(@PathVariable Long cpf)
+	public ResponseEntity<RetornoCliente> recuperaCliente(@PathVariable Long cpf)
 	{
-		return clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+		try
+		{
+		    RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+		    return ResponseEntity.ok(retorno);
+		}
+		catch (Exception e)
+		{
+			return new ResponseEntity<>(HttpStatus.FOUND);
+		}
 		
 	}
 	
