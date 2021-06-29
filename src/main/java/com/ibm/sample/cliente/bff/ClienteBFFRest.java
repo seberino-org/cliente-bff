@@ -6,6 +6,8 @@ import javax.websocket.server.PathParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -57,7 +59,7 @@ public class ClienteBFFRest {
 	
 	@CrossOrigin(origins = "*")
 	@DeleteMapping("/bff/cliente/{cpf}")
-	public RespostaBFF excluiCliente(@PathVariable Long cpf)
+	public ResponseEntity<RespostaBFF> excluiCliente(@PathVariable Long cpf)
 	{
 		RespostaBFF resposta = new RespostaBFF();
 		
@@ -66,30 +68,26 @@ public class ClienteBFFRest {
 			RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
 			if (!resultado.getCodigo().equals("200-FOUND"))
 			{
-				resposta.setCodigo("404-CLIENTE NAO CADASTRADO");
-				resposta.setMensagem("Cliente nao encontrado com esse CPF!" );
-				return resposta;
+				return new ResponseEntity<>(HttpStatus.FOUND);
+
 			}
 			
 			enviaMensagemKafka(this.deleteTopic, resultado.getCliente());
 		
 			resposta.setCodigo("202-EXCLUIDO");
 			resposta.setMensagem("Deleção submetida com sucesso! " );
-			return resposta;
+			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			resposta.setCodigo("400-BAD REQUEST");
-			resposta.setMensagem("Erro no processamento: " + e.getMessage());
-			e.printStackTrace();
-			return resposta;
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
 	
 	@CrossOrigin(origins = "*")
 	@PostMapping("/bff/cliente")
-	public RespostaBFF processaCadastro(@RequestBody Cliente cliente)
+	public ResponseEntity<RespostaBFF> processaCadastro(@RequestBody Cliente cliente)
 	{
 		RespostaBFF resposta = new RespostaBFF();
 		
@@ -98,23 +96,18 @@ public class ClienteBFFRest {
 			this.validaCliente(cliente);
 			if (this.clienteExiste(cliente.getCpf()))
 			{
-				resposta.setCodigo("201-CLIENTE JA CADASTRADO");
-				resposta.setMensagem("Cliente ja cadastrado anteriormente com esse CPF!" );
-				return resposta;
+				return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
 			}
 			
 			enviaMensagemKafka(this.cadastroTopic, cliente);
 		
 			resposta.setCodigo("200-SUCESSO");
 			resposta.setMensagem("Cadastro submetido com sucesso! " );
-			return resposta;
+			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			resposta.setCodigo("400-BAD REQUEST");
-			resposta.setMensagem("Erro no processamento: " + e.getMessage());
-			e.printStackTrace();
-			return resposta;
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 		
 	}
@@ -125,10 +118,17 @@ public class ClienteBFFRest {
 	
 	private boolean clienteExiste(Long cpf)
 	{
-		RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
-		if (resultado.getCodigo().equals("200-FOUND"))
+		try
 		{
-			return true;
+			RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+			if (resultado.getCodigo().equals("200-FOUND"))
+			{
+				return true;
+			}
+		}
+		catch (Exception e)
+		{
+			
 		}
 		return false;
 	}
