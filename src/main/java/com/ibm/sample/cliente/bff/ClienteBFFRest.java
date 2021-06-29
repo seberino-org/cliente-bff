@@ -74,21 +74,14 @@ public class ClienteBFFRest {
 		try
 		{
 			ResponseEntity<RetornoCliente> resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, ResponseEntity.class);
-			if (resultado.getStatusCode()==HttpStatus.NOT_FOUND)
-			{
-				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-
-			}
-			
 			enviaMensagemKafka(this.deleteTopic, resultado.getBody().getCliente());
-		
 			resposta.setCodigo("202-EXCLUIDO");
 			resposta.setMensagem("Deleção submetida com sucesso! " );
 			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
 	}
