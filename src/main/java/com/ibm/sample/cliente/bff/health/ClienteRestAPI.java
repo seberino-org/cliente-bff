@@ -39,11 +39,11 @@ public class ClienteRestAPI implements HealthIndicator {
 			cliente.setUf("SP");
 			cliente.setCep("123442");
 
-			com.ibm.sample.cliente.bff.dto.RetornoCliente retorno = clienteRestHealth.postForObject(urlClienteRest,cliente, RetornoCliente.class);
+			clienteRestHealth.postForObject(urlClienteRest,cliente, RetornoCliente.class);
 			ponto=1;
 			//aguarda o processamento asincrino
 			Thread.sleep(200);
-			retorno = clienteRestHealth.getForObject(urlClienteRest + "/" + cliente.getCpf(), RetornoCliente.class);
+			clienteRestHealth.getForObject(urlClienteRest + "/" + cliente.getCpf(), RetornoCliente.class);
 			ponto=2;
 			clienteRestHealth.delete(urlClienteRest + "/" + cliente.getCpf());
 			ponto=3;
