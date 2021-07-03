@@ -73,8 +73,9 @@ public class ClienteBFFRest {
 		
 		try
 		{
-			ResponseEntity<RetornoCliente> resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, ResponseEntity.class);
-			enviaMensagemKafka(this.deleteTopic, resultado.getBody().getCliente());
+			
+			RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+			enviaMensagemKafka(this.deleteTopic, retorno.getBody().getCliente());
 			resposta.setCodigo("202-EXCLUIDO");
 			resposta.setMensagem("Deleção submetida com sucesso! " );
 			return ResponseEntity.ok(resposta);
