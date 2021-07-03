@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ClienteBffApplication<Cliente-BFF>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.ibm.sample.cliente.bff.ClienteBffApplication",
+            "projectName": "Cliente-BFF",
+            "args": ""
+        }
+    ]
+}
