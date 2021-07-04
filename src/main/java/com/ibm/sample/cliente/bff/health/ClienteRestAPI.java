@@ -13,6 +13,8 @@ import com.ibm.sample.cliente.bff.dto.RetornoCliente;
 @Component
 public class ClienteRestAPI implements HealthIndicator {
 
+
+
 	@Autowired
 	private RestTemplate clienteRestHealth;
 	
