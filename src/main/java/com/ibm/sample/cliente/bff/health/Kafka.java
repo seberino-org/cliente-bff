@@ -5,6 +5,8 @@ import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -15,6 +17,7 @@ import com.ibm.sample.cliente.bff.dto.Cliente;
 @Component
 public class Kafka implements HealthIndicator {
 
+	Logger logger = LoggerFactory.getLogger(Kafka.class);
 	
 	@Value("${cliente-kafka-topico}")
 	private String topicoCadastro; 
@@ -59,12 +62,14 @@ public class Kafka implements HealthIndicator {
 	
 	@Override
 	public Health health() {
+		logger.debug("[health] kafka");
 		int errorCode = 0;
 		try
 		{
+			logger.debug("Verificando se já existe conexão aberta com o kafka");
 			if (kafka ==null)
 			{
-				
+				logger.debug("configurando as propriedades para se conectar ao kafka");
 				cliente.setCpf(0L);
 				cliente.setNome("CLIENTE SINTETICO - HEALTH CHECK");
 				cliente.setNumero(0);
@@ -86,30 +91,40 @@ public class Kafka implements HealthIndicator {
 				//prop.setProperty("value.deserializer","org.springframework.kafka.support.serializer.JsonDeserializer");
 				//prop.setProperty("group.id", "HealthCheck");
 				kafka = new KafkaProducer<>(prop);
+				logger.debug("Conexao efetuada com o kafka");
 			}
 			String topico = topicoCadastro;
+			logger.debug("produzindo a mensagem para o topico " + topico);
 			ProducerRecord<String, Cliente> record = new ProducerRecord(topico,0+"",cliente);
+			logger.debug("Mensagem produzida, fazendo o envio da mensagem ao kafka para o topico " + topico);
 			RecordMetadata resultado = kafka.send(record).get();
+			logger.debug("Mensagem enviada ao kafka para o topico " + topico);
 			if (resultado.offset()<0)
 			{
+				logger.error("Health check falhou ao validar saúde do kafka, não foi possível enviar a mensagem de teste para o tópico  " + topico);
 				throw new Exception ("Falha ao enviar mensagem para o topico " + topico);
 			}
 			topico = topicoDelete;
+			logger.debug("produzindo a mensagem para o topico " + topico);
 			record = new ProducerRecord(topico,0+"",cliente);
+			logger.debug("Mensagem produzida, fazendo o envio da mensagem ao kafka para o topico " + topico);
 			resultado = kafka.send(record).get();
+			logger.debug("Mensagem enviada ao kafka para o topico " + topico);
 			if (resultado.offset()<0)
 			{
+				logger.error("Health check falhou ao validar saúde do kafka, não foi possível enviar a mensagem de teste para o tópico  " + topico);
 				throw new Exception ("Falha ao enviar mensagem para o topico " + topico);
 			}
 			//kafka.close();
 			
-	
+			logger.info("Kafka Saudável, Health check completou com suecesso o envio para os dois tópicos");
 		}
 		catch (Exception e)
 		{
 			errorCode=1;
-			e.printStackTrace();
+			//e.printStackTrace();
 			//System.out.println("Kafka não esta saudável: " + e.getMessage());
+			logger.error("Falha ao verificar a saude do kafka " + e.getMessage());
 			return Health.down().withDetail("Kafka Não saudável", e.getMessage()).build();
 			
 		}

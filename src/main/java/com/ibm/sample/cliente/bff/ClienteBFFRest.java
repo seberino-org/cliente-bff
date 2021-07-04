@@ -100,7 +100,7 @@ public class ClienteBFFRest {
 			enviaMensagemKafka(this.deleteTopic, retorno.getCliente());
 			logger.debug("Mensagem enviada para o kafka");
 			resposta.setCodigo("202-EXCLUIDO");
-			resposta.setMensagem("Deleção submetida com sucesso! " );
+			resposta.setMensagem("Deleção submetida com sucesso! cliente: " + retorno.getCliente().toString() );
 			logger.info(resposta.getCodigo() + " - " + resposta.getMensagem());
 			return ResponseEntity.ok(resposta);
 		}
@@ -134,13 +134,13 @@ public class ClienteBFFRest {
 			logger.debug("Mensagem enviada com sucesso ao topico kafka");
 		
 			resposta.setCodigo("200-SUCESSO");
-			resposta.setMensagem("Cadastro submetido com sucesso! " );
+			resposta.setMensagem("Cadastro submetido com sucesso! cliente: " + cliente.toString() );
 			logger.info(resposta.getCodigo() + " - " + resposta.getMensagem());
 			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			logger.error("Falha durante o cadastro do cliente: "  + e.getMessage());
+			logger.error("Falha durante o cadastro do cliente: " + cliente.toString() + ", erro: "  + e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 		
