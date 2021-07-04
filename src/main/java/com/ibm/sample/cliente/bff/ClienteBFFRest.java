@@ -131,7 +131,7 @@ public class ClienteBFFRest {
 			} 
 			logger.debug("Vai enviar a mensagem para o topico Kafka para processamento do cadastro de forma assíncrona");
 			enviaMensagemKafka(this.cadastroTopic, cliente);
-			logger.debug("Mensagem enviada com sucesso ao topico kafka")
+			logger.debug("Mensagem enviada com sucesso ao topico kafka");
 		
 			resposta.setCodigo("200-SUCESSO");
 			resposta.setMensagem("Cadastro submetido com sucesso! " );
