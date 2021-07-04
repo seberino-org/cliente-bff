@@ -126,7 +126,7 @@ public class ClienteBFFRest {
 			logger.debug("Dados validados com sucesso, verificando se o cliente já existe na base de dados");
 			if (this.clienteExiste(cliente.getCpf()))
 			{
-				logger.info("CLiente já existe na base de dados, cadastro abortado para evitar duplicidade. CLiente CPF: " + cliete.getCpf());
+				logger.info("CLiente já existe na base de dados, cadastro abortado para evitar duplicidade. CLiente CPF: " + cliente.getCpf());
 				return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
 			} 
 			logger.debug("Vai enviar a mensagem para o topico Kafka para processamento do cadastro de forma assíncrona");
