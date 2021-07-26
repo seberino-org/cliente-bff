@@ -22,7 +22,7 @@ import com.ibm.sample.cliente.bff.dto.Cliente;
 import com.ibm.sample.cliente.bff.dto.RespostaBFF;
 import com.ibm.sample.cliente.bff.dto.RetornoCliente;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "http://cliente-frontend-git-cliente.cp-cluster-510ad6ebead8e7457a6e62904edfa48f-0000.us-south.containers.appdomain.cloud", maxAge = 3600)
 @RestController
 public class ClienteBFFRest {
 
