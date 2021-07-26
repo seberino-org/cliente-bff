@@ -22,6 +22,7 @@ import com.ibm.sample.cliente.bff.dto.Cliente;
 import com.ibm.sample.cliente.bff.dto.RespostaBFF;
 import com.ibm.sample.cliente.bff.dto.RetornoCliente;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 public class ClienteBFFRest {
 
