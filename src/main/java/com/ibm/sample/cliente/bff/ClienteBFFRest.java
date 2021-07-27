@@ -105,7 +105,7 @@ public class ClienteBFFRest {
 	public ResponseEntity<RespostaBFF> excluiCliente(@PathVariable Long cpf)
 	{
 		Span span = tracer.buildSpan("excluirCliente").start();
-		span.setTag( "cpf",cpf)
+		span.setTag( "cpf",cpf);
 		logger.debug("[excluiCliente] " + cpf);
 		RespostaBFF resposta = new RespostaBFF();
 		
