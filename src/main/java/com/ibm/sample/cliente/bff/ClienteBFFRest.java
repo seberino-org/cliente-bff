@@ -18,9 +18,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+
 import com.ibm.sample.cliente.bff.dto.Cliente;
 import com.ibm.sample.cliente.bff.dto.RespostaBFF;
 import com.ibm.sample.cliente.bff.dto.RetornoCliente;
+
 
 @RestController
 public class ClienteBFFRest {
@@ -42,10 +46,15 @@ public class ClienteBFFRest {
 	@Autowired
 	private RestTemplate clienteRest;
 	
+	@Autowired
+	private Tracer tracer;
+	
 	@CrossOrigin(origins = "*")
 	@GetMapping("/bff/cliente/pesquisa/{nome}")
 	public List<Cliente> pesquisaClientes(@PathVariable String nome)
 	{	
+		Span span = tracer.buildSpan("pesquisaCliente").start();
+		span.setTag("pesquisa", nome);
 		logger.debug("[pesquisaClientes] " + nome);
 		logger.info("vai peesquisar clientes com o nome contendo: " + nome);
 		List<Cliente> resultado = clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
@@ -53,7 +62,7 @@ public class ClienteBFFRest {
 		{
 			logger.debug("Encontrado: " + resultado.size() + " clientes na pesuisa");
 		}
-
+		span.finish();
 		return resultado;
 	}
 	
@@ -61,6 +70,8 @@ public class ClienteBFFRest {
 	@GetMapping("/bff/cliente/{cpf}")
 	public ResponseEntity<RetornoCliente> recuperaCliente(@PathVariable Long cpf)
 	{
+		Span span = tracer.buildSpan("recuperaCliente").start();
+		span.setTag("cpf", cpf);
 		logger.debug("[recuperaCliente] " + cpf);
 		try
 		{
@@ -79,7 +90,12 @@ public class ClienteBFFRest {
 		catch (Exception e)
 		{
 			logger.warn("Falha na pesquisa de cliente pelo CPF " + e.getMessage());
+			span.setTag("error",true);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			
+		}
+		finally{
+			span.finish();
 		}
 		
 	}
@@ -88,6 +104,8 @@ public class ClienteBFFRest {
 	@DeleteMapping("/bff/cliente/{cpf}")
 	public ResponseEntity<RespostaBFF> excluiCliente(@PathVariable Long cpf)
 	{
+		Span span = tracer.buildSpan("excluirCliente").start();
+		span.setTag( "cpf",cpf)
 		logger.debug("[excluiCliente] " + cpf);
 		RespostaBFF resposta = new RespostaBFF();
 		
@@ -107,7 +125,11 @@ public class ClienteBFFRest {
 		catch (Exception e)
 		{
 			logger.warn("Problemas durante a exclusão do cliente: "  + e.getMessage());
+			span.setTag("error",true);
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		finally{
+			span.finish();
 		}
 		
 	}
