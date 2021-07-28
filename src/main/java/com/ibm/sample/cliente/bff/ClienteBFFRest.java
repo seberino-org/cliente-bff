@@ -71,9 +71,6 @@ public class ClienteBFFRest {
 		logger.debug("[pesquisaClientes] " + nome);
 		logger.info("vai peesquisar clientes com o nome contendo: " + nome);
 		org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-		Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
-  		Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
-		Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/pesquisa/" + nome);
 		HttpHeaders httpHeaders = new HttpHeaders();
 		HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
 		tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
