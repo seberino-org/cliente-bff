@@ -71,7 +71,7 @@ public class ClienteBFFRest {
   		Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
 		Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/pesquisa/" + nome);
 		HttpEntity<String> entity = new HttpEntity<>(headers);
-		List<Cliente> resultado = clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, entity, List.class);
+		List<Cliente> resultado = clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
 		if (resultado!=null)
 		{
 			logger.debug("Encontrado: " + resultado.size() + " clientes na pesuisa");
@@ -95,7 +95,7 @@ public class ClienteBFFRest {
 			Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
 			Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/" + cpf);
 			HttpEntity<String> entity = new HttpEntity<>(headers);
-			RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf, entity,RetornoCliente.class);
+			RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf,RetornoCliente.class);
 			if (retorno!=null && logger.isDebugEnabled())
 			{
 				logger.debug("resultado da busca: " + retorno.getMensagem());
