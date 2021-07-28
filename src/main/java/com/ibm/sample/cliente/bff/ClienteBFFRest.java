@@ -1,5 +1,6 @@
 package com.ibm.sample.cliente.bff;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -9,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -29,6 +32,7 @@ import io.opentracing.propagation.Format;
 import io.opentracing.tag.Tags;
 import jdk.internal.org.jline.utils.Log;
 
+import com.ibm.sample.HttpHeaderInjectAdapter;
 import com.ibm.sample.KafkaHeaderMap;
 import com.ibm.sample.cliente.bff.dto.Cliente;
 import com.ibm.sample.cliente.bff.dto.RespostaBFF;
@@ -70,8 +74,12 @@ public class ClienteBFFRest {
 		Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
   		Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
 		Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/pesquisa/" + nome);
-		HttpEntity<String> entity = new HttpEntity<>(headers);
-		List<Cliente> resultado = clienteRest.getForObject(urlClienteRest+"/pesquisa/" + nome, List.class);
+		HttpHeaders httpHeaders = new HttpHeaders();
+		HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
+		tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
+		HttpEntity<String> entity = new HttpEntity<>(h1.getHeaders());
+		Object[] param = new Object[0];
+		List<Cliente> resultado = clienteRest.exchange(urlClienteRest+"/pesquisa/" + nome, org.springframework.http.HttpMethod.GET, entity, List.class, param).getBody();
 		if (resultado!=null)
 		{
 			logger.debug("Encontrado: " + resultado.size() + " clientes na pesuisa");
@@ -94,8 +102,12 @@ public class ClienteBFFRest {
 			Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
 			Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
 			Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/" + cpf);
-			HttpEntity<String> entity = new HttpEntity<>(headers);
-			RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf,RetornoCliente.class);
+			HttpHeaders httpHeaders = new HttpHeaders();
+			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
+			tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
+			HttpEntity<String> entity = new HttpEntity<>(h1.getHeaders());
+			Object[] param = new Object[0];
+			RetornoCliente retorno = clienteRest.exchange(urlClienteRest+"/" + cpf, HttpMethod.GET,entity, RetornoCliente.class, param).getBody();
 			if (retorno!=null && logger.isDebugEnabled())
 			{
 				logger.debug("resultado da busca: " + retorno.getMensagem());
@@ -131,8 +143,19 @@ public class ClienteBFFRest {
 		
 		try
 		{
-			logger.debug("vai pesquisar se o cliente existe!");			
-			RetornoCliente retorno = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+			logger.debug("vai pesquisar se o cliente existe!");		
+			if (!clienteExiste(spanPai, cpf))
+			{
+				logger.warn("Cliente não existe para ser excluido: cpf " + cpf);
+				span.log("Cliente não existe para ser excluido: cpf " + cpf);
+				return new ResponseEntity<>(HttpStatus.NOT_FOUND)
+			}	
+			HttpHeaders httpHeaders = new HttpHeaders();
+			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
+			tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
+			HttpEntity<String> entity = new HttpEntity<>(h1.getHeaders());
+			Object[] param = new Object[0];
+			RetornoCliente retorno = clienteRest.exchange(urlClienteRest+"/" + cpf, HttpMethod.GET,entity, RetornoCliente.class, param).getBody();
 			logger.debug(retorno.getMensagem());
 			logger.debug("Enviando mensagem para o topico Kafka para realizar a exclusao de forma asyncrona");
 			enviaMensagemKafka(span, this.deleteTopic, retorno.getCliente());
@@ -147,7 +170,7 @@ public class ClienteBFFRest {
 			logger.warn("Problemas durante a exclusão do cliente: "  + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		finally{
 			span.finish();
@@ -168,7 +191,7 @@ public class ClienteBFFRest {
 			logger.debug("Validando se os dados informados para cadastro estão corretos");
 			this.validaCliente(cliente);
 			logger.debug("Dados validados com sucesso, verificando se o cliente já existe na base de dados");
-			if (this.clienteExiste(cliente.getCpf()))
+			if (this.clienteExiste(span,cliente.getCpf()))
 			{
 				logger.info("CLiente já existe na base de dados, cadastro abortado para evitar duplicidade. CLiente CPF: " + cliente.getCpf());
 				return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
@@ -219,11 +242,17 @@ public class ClienteBFFRest {
 		}
 	}
 	
-	private boolean clienteExiste(Long cpf)
+	private boolean clienteExiste(Span spanPai, Long cpf)
 	{
+		Span span = tracer.buildSpan("verificaClienteExiste").asChildOf(spanPai).start();
 		try
 		{
-			RetornoCliente resultado = clienteRest.getForObject(urlClienteRest+"/" + cpf, RetornoCliente.class);
+			HttpHeaders httpHeaders = new HttpHeaders();
+			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
+			tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
+			HttpEntity<String> entity = new HttpEntity<>(h1.getHeaders());
+			Object[] param = new Object[0];
+			RetornoCliente resultado = clienteRest.exchange(urlClienteRest+"/" + cpf, HttpMethod.GET,entity, RetornoCliente.class, param).getBody();
 			if (resultado.getCodigo().equals("200-FOUND"))
 			{
 				return true;
@@ -232,6 +261,9 @@ public class ClienteBFFRest {
 		catch (Exception e)
 		{
 			
+		}
+		finally {
+			span.finish();
 		}
 		return false;
 	}
