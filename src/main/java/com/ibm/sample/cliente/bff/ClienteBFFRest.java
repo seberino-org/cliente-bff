@@ -98,10 +98,6 @@ public class ClienteBFFRest {
 		try
 		{
 			logger.debug("Vai pesquisar o cliente pelo cpf " + cpf);
-			org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-			Tags.SPAN_KIND.set(tracer.activeSpan(), Tags.SPAN_KIND_CLIENT);
-			Tags.HTTP_METHOD.set(tracer.activeSpan(), "GET");
-			Tags.HTTP_URL.set(tracer.activeSpan(), urlClienteRest+"/" + cpf);
 			HttpHeaders httpHeaders = new HttpHeaders();
 			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
 			tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
@@ -116,6 +112,10 @@ public class ClienteBFFRest {
 					logger.debug("Cliente: " + retorno.getCliente().getNome());
 				}
 			}
+			else{
+				logger.info("Não encontrado cliente pelo CPF " + cpf);
+				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			}
 		    return ResponseEntity.ok(retorno);
 		}
 		catch (Exception e)
@@ -123,7 +123,8 @@ public class ClienteBFFRest {
 			logger.warn("Falha na pesquisa de cliente pelo CPF " + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			e.printStackTrace();
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			
 		}
 		finally{
