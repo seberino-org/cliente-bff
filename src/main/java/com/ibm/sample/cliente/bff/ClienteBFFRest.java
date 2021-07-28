@@ -144,11 +144,11 @@ public class ClienteBFFRest {
 		try
 		{
 			logger.debug("vai pesquisar se o cliente existe!");		
-			if (!clienteExiste(spanPai, cpf))
+			if (!clienteExiste(span, cpf))
 			{
 				logger.warn("Cliente não existe para ser excluido: cpf " + cpf);
 				span.log("Cliente não existe para ser excluido: cpf " + cpf);
-				return new ResponseEntity<>(HttpStatus.NOT_FOUND)
+				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}	
 			HttpHeaders httpHeaders = new HttpHeaders();
 			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
