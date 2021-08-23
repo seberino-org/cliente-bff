@@ -47,7 +47,7 @@ public class ClienteRestAPI implements HealthIndicator {
 			logger.debug("POST realizado com sucesso, aguardando 200 ms para fazer a consulta");
 			ponto=1;
 			//aguarda o processamento asincrino
-			Thread.sleep(200);
+			Thread.sleep(400);
 			clienteRestHealth.getForObject(urlClienteRest + "/" + cliente.getCpf(), RetornoCliente.class);
 			logger.debug("Consulta do cliente recem cadastrado efetuada com sucesso! Testando a deleção");
 			ponto=2;
