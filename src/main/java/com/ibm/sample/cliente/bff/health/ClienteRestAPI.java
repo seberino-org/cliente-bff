@@ -39,7 +39,7 @@ public class ClienteRestAPI implements HealthIndicator {
 		catch (Exception e)
 		{
 			logger.error("ClienteRestAPI não esta saudável. Falha ao validar a saúde da RestAPI de Cliente: " + e.getMessage());
-			return Health.down().withDetail("Cliente-BFF Não saudável","Falha ao consultar dados de cliente via REST").build();
+			return Health.down().withDetail("Cliente-BFF Não saudável: ",e.getMessage()).build();
 		}
 	}
 	
