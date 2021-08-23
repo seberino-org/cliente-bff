@@ -28,11 +28,10 @@ public class ClienteRestAPI implements HealthIndicator {
 	@Override
 	public Health health() {
 		logger.debug("[health] ClienteRestAPI");
-		int ponto=0;
 		try
 		{
 
-			clienteRestHealth.getForObject(urlClienteRest + "/" + cliente.getCpf(), RetornoCliente.class);
+			clienteRestHealth.getForObject(urlClienteRest + "/17956462843" , RetornoCliente.class);
 			logger.debug("ClienteRestAPI esta saudável");
 			return Health.up().build();
 			
