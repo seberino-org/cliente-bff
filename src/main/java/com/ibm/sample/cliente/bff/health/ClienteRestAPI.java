@@ -32,14 +32,14 @@ public class ClienteRestAPI implements HealthIndicator {
 		{
 
 			clienteRestHealth.getForObject(urlClienteRest + "/17956462843" , RetornoCliente.class);
-			logger.debug("ClienteRestAPI esta saudável");
+			logger.debug("ClienteRestAPI is not health");
 			return Health.up().build();
 			
 		}
 		catch (Exception e)
 		{
-			logger.error("ClienteRestAPI não esta saudável. Falha ao validar a saúde da RestAPI de Cliente: " + e.getMessage());
-			return Health.down().withDetail("Cliente-Rest Não saudável: ",e.getMessage()).build();
+			logger.error("ClienteRestAPI is not Health. Error to validate RestAPI of Client: " + e.getMessage());
+			return Health.down().withDetail("Cliente-Rest is not Health: ",e.getMessage()).build();
 		}
 	}
 	

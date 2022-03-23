@@ -69,7 +69,7 @@ public class ClienteBFFRest {
 		Span span = tracer.buildSpan("pesquisaCliente").start();
 		span.setTag("pesquisa", nome);
 		logger.debug("[pesquisaClientes] " + nome);
-		logger.info("vai peesquisar clientes com o nome contendo: " + nome);
+		logger.info("It will search for customers with name starting with : " + nome);
 		org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
 		HttpHeaders httpHeaders = new HttpHeaders();
 		HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
@@ -79,7 +79,7 @@ public class ClienteBFFRest {
 		List<Cliente> resultado = clienteRest.exchange(urlClienteRest+"/pesquisa/" + nome, org.springframework.http.HttpMethod.GET, entity, List.class, param).getBody();
 		if (resultado!=null)
 		{
-			logger.debug("Encontrado: " + resultado.size() + " clientes na pesuisa");
+			logger.debug("Found: " + resultado.size() + " customer(s) in the result");
 		}
 		span.finish();
 		return resultado;
@@ -94,7 +94,7 @@ public class ClienteBFFRest {
 		logger.debug("[recuperaCliente] " + cpf);
 		try
 		{
-			logger.debug("Vai pesquisar o cliente pelo cpf " + cpf);
+			logger.debug("It will search a customer for ID: " + cpf);
 			HttpHeaders httpHeaders = new HttpHeaders();
 			HttpHeaderInjectAdapter h1 = new HttpHeaderInjectAdapter(httpHeaders);
 			tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS,h1);
@@ -103,21 +103,21 @@ public class ClienteBFFRest {
 			RetornoCliente retorno = clienteRest.exchange(urlClienteRest+"/" + cpf, HttpMethod.GET,entity, RetornoCliente.class, param).getBody();
 			if (retorno!=null && logger.isDebugEnabled())
 			{
-				logger.debug("resultado da busca: " + retorno.getMensagem());
+				logger.debug("Search result: " + retorno.getMensagem());
 				if (retorno.getCliente()!=null)
 				{
-					logger.debug("Cliente: " + retorno.getCliente().getNome());
+					logger.debug("Customer: " + retorno.getCliente().getNome());
 				}
 			}
 			else{
-				logger.info("Não encontrado cliente pelo CPF " + cpf);
+				logger.info("Customer not found with the ID: " + cpf);
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}
 		    return ResponseEntity.ok(retorno);
 		}
 		catch (Exception e)
 		{
-			logger.warn("Falha na pesquisa de cliente pelo CPF " + e.getMessage());
+			logger.warn("Error to search customer by ID: " + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
 			e.printStackTrace();
@@ -141,11 +141,11 @@ public class ClienteBFFRest {
 		
 		try
 		{
-			logger.debug("vai pesquisar se o cliente existe!");		
+			logger.debug("It will check if the customer exists!");		
 			if (!clienteExiste(span, cpf))
 			{
-				logger.warn("Cliente não existe para ser excluido: cpf " + cpf);
-				span.log("Cliente não existe para ser excluido: cpf " + cpf);
+				logger.warn("Customer requested to be deleted does not exist with this ID: " + cpf);
+				span.log("Customer requested to be deleted does not exist with this ID: " + cpf);
 				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 			}	
 			HttpHeaders httpHeaders = new HttpHeaders();
@@ -155,17 +155,17 @@ public class ClienteBFFRest {
 			Object[] param = new Object[0];
 			RetornoCliente retorno = clienteRest.exchange(urlClienteRest+"/" + cpf, HttpMethod.GET,entity, RetornoCliente.class, param).getBody();
 			logger.debug(retorno.getMensagem());
-			logger.debug("Enviando mensagem para o topico Kafka para realizar a exclusao de forma asyncrona");
+			logger.debug("Sending message for Kafka Topic to customer be deleted async");
 			enviaMensagemKafka(span, this.deleteTopic, retorno.getCliente());
-			logger.debug("Mensagem enviada para o kafka");
-			resposta.setCodigo("202-EXCLUIDO");
-			resposta.setMensagem("Deleção submetida com sucesso! cliente: " + retorno.getCliente().toString() );
+			logger.debug("Message sent to Kafka");
+			resposta.setCodigo("202-DELETED");
+			resposta.setMensagem("Customer Deletion submited successfully! Customer: " + retorno.getCliente().toString() );
 			logger.info(resposta.getCodigo() + " - " + resposta.getMensagem());
 			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			logger.warn("Problemas durante a exclusão do cliente: "  + e.getMessage());
+			logger.warn("Error to delete customer: "  + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -186,26 +186,26 @@ public class ClienteBFFRest {
 		
 		try
 		{
-			logger.debug("Validando se os dados informados para cadastro estão corretos");
+			logger.debug("Validating the data sent to create a customer record");
 			this.validaCliente(cliente);
-			logger.debug("Dados validados com sucesso, verificando se o cliente já existe na base de dados");
+			logger.debug("Customer data validated successfully, verifying if the customer already exists in the database");
 			if (this.clienteExiste(span,cliente.getCpf()))
 			{
-				logger.info("CLiente já existe na base de dados, cadastro abortado para evitar duplicidade. CLiente CPF: " + cliente.getCpf());
+				logger.info("Customer exists in the database, operation canceled to avoid data duplication. ID:" + cliente.getCpf());
 				return new ResponseEntity<>(HttpStatus.ALREADY_REPORTED);
 			} 
-			logger.debug("Vai enviar a mensagem para o topico Kafka para processamento do cadastro de forma assíncrona");
+			logger.debug("Sending a message to Kafka topic to be process async");
 			enviaMensagemKafka(span, this.cadastroTopic, cliente);
-			logger.debug("Mensagem enviada com sucesso ao topico kafka");
+			logger.debug("Message sent to kafka Topic");
 		
-			resposta.setCodigo("200-SUCESSO");
-			resposta.setMensagem("Cadastro submetido com sucesso! cliente: " + cliente.toString() );
+			resposta.setCodigo("200-SUCCESS");
+			resposta.setMensagem("Customer creation submited successfully! Customer: " + cliente.toString() );
 			logger.info(resposta.getCodigo() + " - " + resposta.getMensagem());
 			return ResponseEntity.ok(resposta);
 		}
 		catch (Exception e)
 		{
-			logger.error("Falha durante o cadastro do cliente: " + cliente.toString() + ", erro: "  + e.getMessage());
+			logger.error("Error to create a new customer: " + cliente.toString() + ", error: "  + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -233,7 +233,7 @@ public class ClienteBFFRest {
 				.setHeader("tracer_context_" + item.getKey(), item.getValue())
 				.build();
 		kafka.send(mensagem);
-		logger.debug("Mensagem: " + cliente + " enviada para o topico:  " + topico);
+		logger.debug("Mensage: " + cliente + " sent to topic:  " + topico);
 		if (spanPai!=null)
 		{
 			span.finish();
@@ -270,15 +270,15 @@ public class ClienteBFFRest {
 	{
 		if (cliente==null)
 		{
-			throw new Exception("Payload inváido, não foram encontrados os dados do cliente");
+			throw new Exception("Payload invalid, it wasn't found customer data");
 		}
 		if (cliente.getCpf()==null || cliente.getCpf()==0)
 		{
-			throw new Exception("CPF é um campo obrigatório");
+			throw new Exception("CPF is a required field");
 		}
 		if (cliente.getNome()==null || cliente.getNome().length()==0)
 		{
-			throw new Exception("Nome é um campo obrigatório");
+			throw new Exception("Nome is a required field");
 		}
 		
 	}
