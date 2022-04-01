@@ -120,7 +120,7 @@ public class ClienteBFFRest {
 			logger.warn("Error to search customer by ID: " + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
-			e.printStackTrace();
+			//e.printStackTrace();
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			
 		}
