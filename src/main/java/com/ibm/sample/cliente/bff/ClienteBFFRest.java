@@ -1,10 +1,8 @@
 package com.ibm.sample.cliente.bff;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.kafka.common.protocol.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +22,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
-import io.opentracing.tag.Tags;
-import jdk.internal.org.jline.utils.Log;
 
 import com.ibm.sample.HttpHeaderInjectAdapter;
 import com.ibm.sample.KafkaHeaderMap;
@@ -109,18 +106,19 @@ public class ClienteBFFRest {
 					logger.debug("Customer: " + retorno.getCliente().getNome());
 				}
 			}
-			else{
-				logger.info("Customer not found with the ID: " + cpf);
-				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-			}
 		    return ResponseEntity.ok(retorno);
+		}
+		catch (HttpClientErrorException e1)
+		{
+			logger.info("Customer not found with the ID: " + cpf);
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		catch (Exception e)
 		{
 			logger.warn("Error to search customer by ID: " + e.getMessage());
 			span.setTag("error",true);
 			span.setTag("ErrorMessage", e.getMessage());
-			//e.printStackTrace();
+			e.printStackTrace();
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			
 		}
